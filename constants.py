@@ -1,0 +1,4 @@
+# Constants
+NUM_STEPS = 100
+GRID_WIDTH = 20
+GRID_LENGTH = 20
