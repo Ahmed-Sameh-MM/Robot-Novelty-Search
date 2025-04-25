@@ -1,5 +1,7 @@
 import mesa
 
+from obstacle import Obstacle
+
 class Robot(mesa.Agent):
     """A Robot Agent"""
 
@@ -8,13 +10,90 @@ class Robot(mesa.Agent):
         super().__init__(model)
 
         # Create the agent's variable and set the initial values.
-        self.wealth = 1
+        self.is_climbing = False
+        self.climb_progress = 0
+        self.climb_direction = None  # 'up' or 'down'
+        self.required_climb_steps = 3  # Steps needed to climb up
+        self.required_descend_steps = 1  # Steps needed to climb down
+
+    def _is_on_obstacle(self):
+        """Check if the robot is on an obstacle"""
+        for obstacle in self.model.obstacles:
+            if self.pos in obstacle.occupied_cells:
+                return obstacle
+        return None
+
+    def _get_possible_moves(self):
+        """Get possible moves considering obstacles"""
+        obstacle = self._is_on_obstacle()
+        if obstacle:
+            # If on obstacle, can only move along the obstacle's orientation
+            if obstacle.orientation == 'horizontal':
+                return [(self.pos[0] - 1, self.pos[1]), (self.pos[0] + 1, self.pos[1])]
+
+            else:  # vertical
+                return [(self.pos[0], self.pos[1] - 1), (self.pos[0], self.pos[1] + 1)]
+        else:
+            # Get all neighboring cells
+            neighbors = self.model.grid.get_neighborhood(self.pos, moore=True, include_center=False)
+            possible_moves = []
+            
+            for pos in neighbors:
+                # Check if cell is empty or contains an obstacle
+                cell_contents = self.model.grid.get_cell_list_contents(pos)
+                if not cell_contents or any(isinstance(agent, Obstacle) for agent in cell_contents):
+                    possible_moves.append(pos)
+            
+            return possible_moves
 
     def move(self):
         # The agent's step will go here.
-        possible_steps = self.model.grid.get_neighborhood(self.pos, moore=True, include_center=False)
-        new_position = self.random.choice(possible_steps)
-        old_pos = self.pos
-        self.model.grid.move_agent(self, new_position)
-
-        print(f"Old pos: {old_pos}, New pos: {self.pos}")
+        obstacle = self._is_on_obstacle()
+        
+        if obstacle:
+            if not self.is_climbing:
+                # Start climbing
+                self.is_climbing = True
+                self.climb_progress = 0
+                self.climb_direction = 'up'
+                return
+            
+            if self.is_climbing:
+                self.climb_progress += 1
+                
+                if self.climb_direction == 'up':
+                    if self.climb_progress >= self.required_climb_steps:
+                        # Reached top, start descending
+                        self.climb_direction = 'down'
+                        self.climb_progress = 0
+                else:  # descending
+                    if self.climb_progress >= self.required_descend_steps:
+                        # Finished descending
+                        self.is_climbing = False
+                        self.climb_progress = 0
+                        self.climb_direction = None
+                        
+                        # Move to next cell
+                        possible_moves = self._get_possible_moves()
+                        valid_moves = [pos for pos in possible_moves if self.model.grid.is_cell_empty(pos)]
+                        if valid_moves:
+                            new_position = self.random.choice(valid_moves)
+                            old_pos = self.pos
+                            self.model.grid.move_agent(self, new_position)
+                            print(f"Old pos: {old_pos}, New pos: {self.pos}")
+        else:
+            # Normal movement
+            possible_moves = self._get_possible_moves()
+            valid_moves = []
+            
+            for pos in possible_moves:
+                cell_contents = self.model.grid.get_cell_list_contents(pos)
+                # Allow moving to empty cells or cells with obstacles
+                if not cell_contents or any(isinstance(agent, Obstacle) for agent in cell_contents):
+                    valid_moves.append(pos)
+            
+            if valid_moves:
+                new_position = self.random.choice(valid_moves)
+                old_pos = self.pos
+                self.model.grid.move_agent(self, new_position)
+                print(f"Old pos: {old_pos}, New pos: {self.pos}")

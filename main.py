@@ -5,31 +5,27 @@ import numpy as np
 import pandas as pd
 
 from model import RobotModel
+from robot import Robot
+from obstacle import Obstacle
 from constants import *
 
 def agent_portrayal(agent):
+    if isinstance(agent, Robot):
+        color = "green"
+    elif isinstance(agent, Obstacle):
+        if agent.orientation == "horizontal":
+            color = "blue"
+        else:
+            color = "yellow"
+    else:
+        color = "red"
+
     return {
-        "color": "tab:blue",
+        "color": color,
         "size": 50,
     }
 
 model_params = {
-    # "width": {
-    #     "type": "SliderInt",
-    #     "value": GRID_WIDTH,
-    #     "label": "Grid Width:",
-    #     "min": 5,
-    #     "max": 100,
-    #     "step": 1,
-    # },
-    # "length": {
-    #     "type": "SliderInt",
-    #     "value": GRID_LENGTH,
-    #     "label": "Grid Length:",
-    #     "min": 5,
-    #     "max": 100,
-    #     "step": 1,
-    # },
     "width": GRID_WIDTH,
     "length": GRID_LENGTH
 }
@@ -40,9 +36,6 @@ robot_model = RobotModel(
     length=GRID_LENGTH,
 ) #keyword arguments
 
-# for _ in range(NUM_STEPS):
-#     robot_model.step()
-#
 # agent_wealth = robot_model.datacollector.get_agent_vars_dataframe()
 # print(agent_wealth.head())
 
