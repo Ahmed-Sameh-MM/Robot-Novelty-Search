@@ -19,7 +19,7 @@ class Robot(mesa.Agent):
     def _is_on_obstacle(self):
         """Check if the robot is on an obstacle"""
         for obstacle in self.model.obstacles:
-            if self.pos in obstacle.occupied_cells:
+            if self.pos in obstacle.occupied_cell:
                 return obstacle
         return None
 
@@ -29,10 +29,10 @@ class Robot(mesa.Agent):
         if obstacle:
             # If on obstacle, can only move along the obstacle's orientation
             if obstacle.orientation == 'horizontal':
-                return [(self.pos[0] - 1, self.pos[1]), (self.pos[0] + 1, self.pos[1])]
+                return obstacle.get_next_cell(climb_direction=self.climb_direction)
 
             else:  # vertical
-                return [(self.pos[0], self.pos[1] - 1), (self.pos[0], self.pos[1] + 1)]
+                return obstacle.get_next_cell(climb_direction=self.climb_direction)
         else:
             # Get all neighboring cells
             neighbors = self.model.grid.get_neighborhood(self.pos, moore=True, include_center=False)
@@ -49,7 +49,7 @@ class Robot(mesa.Agent):
     def move(self):
         # The agent's step will go here.
         obstacle = self._is_on_obstacle()
-        
+
         if obstacle:
             if not self.is_climbing:
                 # Start climbing
@@ -63,6 +63,11 @@ class Robot(mesa.Agent):
                 
                 if self.climb_direction == 'up':
                     if self.climb_progress >= self.required_climb_steps:
+                        # Move to next cell
+                        possible_moves = self._get_possible_moves()
+                        new_position = self.random.choice(possible_moves)
+                        self.model.grid.move_agent(self, new_position)
+
                         # Reached top, start descending
                         self.climb_direction = 'down'
                         self.climb_progress = 0
@@ -71,16 +76,14 @@ class Robot(mesa.Agent):
                         # Finished descending
                         self.is_climbing = False
                         self.climb_progress = 0
-                        self.climb_direction = None
-                        
+
                         # Move to next cell
                         possible_moves = self._get_possible_moves()
-                        valid_moves = [pos for pos in possible_moves if self.model.grid.is_cell_empty(pos)]
-                        if valid_moves:
-                            new_position = self.random.choice(valid_moves)
-                            old_pos = self.pos
-                            self.model.grid.move_agent(self, new_position)
-                            print(f"Old pos: {old_pos}, New pos: {self.pos}")
+                        new_position = self.random.choice(possible_moves)
+                        self.model.grid.move_agent(self, new_position)
+
+                        self.climb_direction = None
+
         else:
             # Normal movement
             possible_moves = self._get_possible_moves()
@@ -94,6 +97,4 @@ class Robot(mesa.Agent):
             
             if valid_moves:
                 new_position = self.random.choice(valid_moves)
-                old_pos = self.pos
                 self.model.grid.move_agent(self, new_position)
-                print(f"Old pos: {old_pos}, New pos: {self.pos}")

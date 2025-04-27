@@ -55,10 +55,10 @@ class RobotModel(mesa.Model):
                     self.grid.is_cell_empty(next_pos) and
                     pos != (0, 0) and next_pos != (0, 0)):  # Don't block start
                     break
-            
-            # Create and place two obstacle agents
+
+            # Create and place both obstacle agents
             obstacle1 = Obstacle(self, pos, orientation, is_first_cell=True)
-            obstacle2 = Obstacle(self, pos, orientation, is_first_cell=False)
+            obstacle2 = Obstacle(self, next_pos, orientation, is_first_cell=False)
             self.obstacles.extend([obstacle1, obstacle2])
 
             # Place both obstacle agents
