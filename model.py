@@ -38,11 +38,11 @@ class RobotModel(mesa.Model):
             # Find a valid position for the obstacle
             while True:
                 if orientation == 'horizontal':
-                    x = random.randint(0, self.grid.width - 2)
+                    x = random.randint(1, self.grid.width - 3)
                     y = random.randint(0, self.grid.height - 1)
                 else:
                     x = random.randint(0, self.grid.width - 1)
-                    y = random.randint(0, self.grid.height - 2)
+                    y = random.randint(1, self.grid.height - 3)
                 
                 # Check if the position and adjacent cell are empty
                 pos = (x, y)
