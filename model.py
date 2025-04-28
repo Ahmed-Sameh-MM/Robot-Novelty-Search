@@ -10,7 +10,7 @@ class RobotModel(mesa.Model):
 
     def __init__(self, width, length, seed=1024):
         super().__init__(seed=seed)
-        self.num_agents = 1
+        self.num_agents = NUM_ROBOT_AGENTS
         self.grid = mesa.space.MultiGrid(width, length, False)
         self.datacollector = mesa.DataCollector(
             # model_reporters={"Gini": self._compute_gini},
@@ -25,8 +25,9 @@ class RobotModel(mesa.Model):
 
         # Create agents
         agents = Robot.create_agents(model=self, n=self.num_agents)
-        self.robot = agents[0]
-        self.grid.place_agent(self.robot, (0, 0))
+
+        for agent in agents:
+            self.grid.place_agent(agent, (0, 0))
 
     def _place_obstacles(self):
         """Place obstacles in the grid"""
